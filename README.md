@@ -1,55 +1,75 @@
-# Automatic-Irrigation-System
+🌿 Automatic Irrigation System
+Automatic-Irrigation-System is a smart, IoT-enabled irrigation controller designed to automate plant watering based on real-time soil moisture analysis.
 
-## 🌱 Overview  
-**Automatic-Irrigation-System** is a smart irrigation controller that automatically waters plants based on real-time soil moisture readings.  
-The goal is to reduce manual effort and water wastage by turning the pump ON only when the soil becomes dry and turning it OFF after adequate moisture is restored.
+The primary goal is to conserve water and reduce manual labor by ensuring the water pump activates only when the soil is dry and deactivates immediately after optimal moisture levels are restored.
 
-The project also includes (or will include) a **manual override feature** that allows users to control the water pump manually.  
-In the future, we plan to **fully separate the Automatic and Manual features** for better separation of concerns and cleaner architecture.
+🚀 Key Features
+✅ Automated Watering: Smart pump activation based on real-time soil moisture sensor data.
 
----
+✅ Threshold Logic: Configurable moisture thresholds to prevent over-watering or under-watering.
 
-## 🚀 Features  
-- Automatic watering using soil moisture sensor data  
-- Pump/relay control based on configurable moisture thresholds  
-- Real-time monitoring logic  
-- Manual control mode (present or planned)  
-- Clean project structure for ease of modification  
-- Flexible enough to integrate new sensors or automation rules  
+✅ Real-time Monitoring: Continuous tracking of soil conditions.
 
----
+✅ Manual Override: Existing/Planned capability to manually toggle the water pump.
 
-## 📦 Installation & Setup  
+✅ Scalable Architecture: Clean code structure designed for easy integration of new sensors (e.g., temperature, humidity) or automation rules.
 
-### 1️⃣ Clone the Repository  
-```bash
+🔮 Roadmap
+[ ] Full Separation of Concerns: Decouple Automatic and Manual logic for a cleaner software architecture.
+
+[ ] Cloud Integration: Data logging to cloud platforms (AWS IoT/Firebase).
+
+[ ] Mobile App: Remote control via a companion app.
+
+🛠️ Hardware Requirements
+To build this system, you will need the following components:
+
+Microcontroller: ESP32 or Arduino Board.
+
+Sensors: Capacitive or Resistive Soil Moisture Sensor.
+
+Actuator: 5V Relay Module (to control the pump).
+
+Power: External power supply for the pump.
+
+Water Pump: Submersible or diaphragm pump.
+
+📦 Installation & Setup
+Follow these steps to get the project running locally.
+
+1️⃣ Clone the Repository
+Bash
+
 git clone https://github.com/anshulvyasa/Automatic-Irrigation-System.git
 cd Automatic-Irrigation-System
+2️⃣ Install Dependencies (For UI/Node.js Scripts)
+If you are using the dashboard, backend logging, or helper scripts included in this repo, install the necessary node packages:
 
-### 2️⃣ Install Node Dependencies (if using UI / backend / helper scripts)
+Bash
 
-If the project contains JavaScript/TypeScript code for dashboard, backend, logging, or automation scripts, install the required Node packages:
-
-```bash
 npm install
+3️⃣ Hardware Configuration
+Sensor: Connect the Soil Moisture Sensor to the designated Analog/Digital input pin on your board.
 
-### 3️⃣ Hardware Setup (For ESP32/Arduino-Based Systems)
+Relay: Connect the Relay Module control pin to a digital output pin.
 
-- Connect **soil moisture sensor** to an analog or digital input pin  
-- Connect **water pump** to a **relay module** securely  
-- Ensure an **external power supply** for the pump  
-- Modify **moisture threshold values** in the code as per your soil and plant requirements  
+Pump: Wire the Water Pump through the relay (Common & NO - Normally Open) and connect it to the external power source.
 
+Calibration: Test your sensor in dry air vs. water to determine the correct threshold values in the code.
 
-### 4️⃣ Upload / Run the Code
+4️⃣ Upload & Run
+🔹 Option A: Using ESP32 / Arduino IDE
+Open the .ino or main firmware file in Arduino IDE / PlatformIO.
 
-#### 🔹 Using ESP32 / Arduino IDE:
-- Open the `.ino` or main firmware file  
-- Select the correct **ESP32 board** and **COM port**  
-- Click **Upload** to flash the code onto the device  
+Select your Board (e.g., DOIT ESP32 DEVKIT V1) and correct COM Port.
 
-#### 🔹 Using Node.js scripts / UI:
-If your project includes a Node.js based UI, dashboard, or helper service, run:
+Update the MOISTURE_THRESHOLD variable in the code.
 
-```bash
+Click Upload to flash the firmware.
+
+🔹 Option B: Using Node.js (Dashboard/Simulation)
+If running the web interface or simulation scripts:
+
+Bash
+
 npm run dev
