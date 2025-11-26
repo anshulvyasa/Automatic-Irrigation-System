@@ -8,14 +8,14 @@ interface SoilMoistureGaugeProps {
 
 export const SoilMoistureGauge = ({ value, sparklineData = [] }: SoilMoistureGaugeProps) => {
   const getColorForValue = (val: number) => {
-    if (val < 30) return "text-destructive";
-    if (val < 50) return "text-warning";
+    if (val < 10) return "text-destructive";
+    if (val < 20) return "text-warning";
     return "text-success";
   };
 
   const getGaugeColor = (val: number) => {
-    if (val < 30) return "#ef4444";
-    if (val < 50) return "#f59e0b";
+    if (val < 10) return "#ef4444";
+    if (val < 20) return "#f59e0b";
     return "#22c55e";
   };
 

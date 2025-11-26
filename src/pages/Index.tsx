@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { ConnectivityIndicator } from "@/components/ConnectivityIndicator";
 import { MetricCard } from "@/components/MetricCard";
 import { SoilMoistureGauge } from "@/components/SoilMoistureGauge";
@@ -7,7 +7,10 @@ import { MoistureChart } from "@/components/MoistureChart";
 import { EventLog } from "@/components/EventLog";
 import { QuickActions } from "@/components/QuickActions";
 import { Thermometer, Droplets, Battery, Wifi } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { pubsub } from "@/App";
+import { SUB_TOPIC } from "@/config";
+import { useMoistureSensor } from "@/hooks/use-moisture-sensor";
+import { useEspConnection } from "@/hooks/use-esp-connection";
 
 // Mock data generator for demo
 const generateMockChartData = (hours: number) => {
@@ -26,7 +29,6 @@ const generateMockChartData = (hours: number) => {
 const Index = () => {
   // Mock telemetry state
   const [deviceId] = useState("esp32-001");
-  const [connectivity, setConnectivity] = useState<"connected" | "connecting" | "disconnected">("connected");
   const [telemetry, setTelemetry] = useState({
     soil_moisture: 42,
     temp_c: 28.5,
@@ -40,6 +42,10 @@ const Index = () => {
   const [mode, setMode] = useState<"manual" | "auto">("manual");
   const [moistureThreshold, setMoistureThreshold] = useState(35);
   const [runtime] = useState("00:00:00");
+  const { updateDeviceIdFn, updateDeviceMoistureReadingFn, updateDeviceSignalReadingFn, MOISTURE_SENSOR_DEVICE_ID, MOISTURE_SENSOR_READING, MOISTURE_SENSOR_SIGNAL } = useMoistureSensor();
+  const { updateStageFn, stage } = useEspConnection();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const [events] = useState([
     { id: "1", type: "telemetry" as const, message: "Telemetry update received", timestamp: new Date().toISOString() },
@@ -48,10 +54,47 @@ const Index = () => {
     { id: "4", type: "info" as const, message: "Device connected to MQTT", timestamp: new Date(Date.now() - 900000).toISOString() },
   ]);
 
-  const chartData24h = generateMockChartData(24);
-  const chartData7d = generateMockChartData(168);
+  const chartData24h = useMemo(() => generateMockChartData(24), []);
+  const chartData7d = useMemo(() => generateMockChartData(168), []);
 
-  const sparklineData = Array.from({ length: 12 }, () => Math.floor(Math.random() * 100));
+  const sparklineData = useMemo(() => Array.from({ length: 12 }, () => Math.floor(Math.random() * 100)), []);
+
+
+  //my Implementation
+  useEffect(() => {
+    console.log("Setting Up MQTT");
+
+    // 1. Set initial timeout (Assume disconnected if no data in 60s)
+    timerRef.current = setTimeout(() => {
+      console.log("Initial timeout - No data received");
+      updateStageFn({ stage: "disconnected" });
+    }, 10000);
+
+    const subscription = pubsub.subscribe({ topics: [SUB_TOPIC] }).subscribe({
+      next: (data) => {
+        updateDeviceIdFn(data.deviceId as string);
+        updateDeviceMoistureReadingFn(Math.min(100, 2 * Number(data.moisture)));
+        updateDeviceSignalReadingFn(Number(data.signal));
+
+        updateStageFn({ stage: "connected" });
+
+        if (timerRef.current) clearTimeout(timerRef.current);
+
+        timerRef.current = setTimeout(() => {
+          console.log("Connection lost - No data for 60s");
+          updateStageFn({ stage: "disconnected" });
+        }, 10000);
+      },
+      error: (err) => console.error("MQTT Error:", err),
+    });
+
+    // Cleanup
+    return () => {
+      subscription.unsubscribe();
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
 
   // Mock MQTT connection simulation
   useEffect(() => {
@@ -106,17 +149,8 @@ const Index = () => {
                 <Droplets className="h-6 w-6 text-primary" />
                 <h1 className="text-2xl font-bold">Smart Irrigation</h1>
               </div>
-              <Select value={deviceId}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="esp32-001">esp32-001</SelectItem>
-                  <SelectItem value="esp32-002">esp32-002</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
-            <ConnectivityIndicator status={connectivity} lastSeen={telemetry.timestamp} />
+            <ConnectivityIndicator status={stage} lastSeen={telemetry.timestamp} />
           </div>
         </div>
       </header>
@@ -127,7 +161,7 @@ const Index = () => {
           {/* Left Column - Live Telemetry */}
           <div className="lg:col-span-2 space-y-6">
             {/* Main Gauge */}
-            <SoilMoistureGauge value={telemetry.soil_moisture} sparklineData={sparklineData} />
+            <SoilMoistureGauge value={MOISTURE_SENSOR_READING} sparklineData={sparklineData} />
 
             {/* Metrics Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -140,7 +174,7 @@ const Index = () => {
               <MetricCard
                 icon={Droplets}
                 label="Humidity"
-                value={telemetry.humidity}
+                value={telemetry.humidity.toPrecision(4)}
                 unit="%"
               />
               <MetricCard
@@ -152,7 +186,7 @@ const Index = () => {
               <MetricCard
                 icon={Wifi}
                 label="Signal"
-                value={telemetry.rssi}
+                value={MOISTURE_SENSOR_SIGNAL}
                 unit="dBm"
               />
             </div>

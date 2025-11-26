@@ -6,6 +6,8 @@ import { Slider } from "@/components/ui/slider";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Power, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PUB_TOPIC } from "@/config";
+import { pubsub } from "@/App";
 
 interface PumpControlProps {
   pumpState: "ON" | "OFF";
@@ -30,15 +32,27 @@ export const PumpControl = ({
   const [pendingState, setPendingState] = useState<"ON" | "OFF">("OFF");
   const { toast } = useToast();
 
-  const handlePumpToggle = () => {
+  const handlePumpToggle = async () => {
     const newState = pumpState === "ON" ? "OFF" : "ON";
     setPendingState(newState);
     setShowConfirm(true);
   };
 
-  const confirmToggle = () => {
+  const confirmToggle = async () => {
     onPumpToggle(pendingState);
     setShowConfirm(false);
+
+    try {
+      await pubsub.publish({
+        topics: [PUB_TOPIC],
+        message: {
+          command: pendingState == 'ON' ? "pump_on" : "pump_off",
+        }
+      });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to send test command", variant: "destructive" });
+    }
+
     toast({
       title: `Pump ${pendingState}`,
       description: `Irrigation pump turned ${pendingState.toLowerCase()}`,
@@ -54,11 +68,10 @@ export const PumpControl = ({
               <Power className="h-5 w-5" />
               Pump Control
             </h3>
-            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-              pumpState === "ON" 
-                ? "bg-success/20 text-success" 
-                : "bg-muted text-muted-foreground"
-            }`}>
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${pumpState === "ON"
+              ? "bg-success/20 text-success"
+              : "bg-muted text-muted-foreground"
+              }`}>
               {pumpState}
             </div>
           </div>
@@ -67,11 +80,10 @@ export const PumpControl = ({
             <Button
               size="lg"
               variant={pumpState === "ON" ? "default" : "outline"}
-              className={`w-32 h-32 rounded-full ${
-                pumpState === "ON" 
-                  ? "bg-gradient-to-br from-primary to-success shadow-glow" 
-                  : ""
-              }`}
+              className={`w-32 h-32 rounded-full ${pumpState === "ON"
+                ? "bg-gradient-to-br from-primary to-success shadow-glow"
+                : ""
+                }`}
               onClick={handlePumpToggle}
             >
               <div className="flex flex-col items-center gap-2">
