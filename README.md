@@ -25,3 +25,31 @@ In the future, we plan to **fully separate the Automatic and Manual features** f
 ```bash
 git clone https://github.com/anshulvyasa/Automatic-Irrigation-System.git
 cd Automatic-Irrigation-System
+
+### 2️⃣ Install Node Dependencies (if using UI / backend / helper scripts)
+
+If the project contains JavaScript/TypeScript code for dashboard, backend, logging, or automation scripts, install the required Node packages:
+
+```bash
+npm install
+
+### 3️⃣ Hardware Setup (For ESP32/Arduino-Based Systems)
+
+- Connect **soil moisture sensor** to an analog or digital input pin  
+- Connect **water pump** to a **relay module** securely  
+- Ensure an **external power supply** for the pump  
+- Modify **moisture threshold values** in the code as per your soil and plant requirements  
+
+
+### 4️⃣ Upload / Run the Code
+
+#### 🔹 Using ESP32 / Arduino IDE:
+- Open the `.ino` or main firmware file  
+- Select the correct **ESP32 board** and **COM port**  
+- Click **Upload** to flash the code onto the device  
+
+#### 🔹 Using Node.js scripts / UI:
+If your project includes a Node.js based UI, dashboard, or helper service, run:
+
+```bash
+npm run dev
